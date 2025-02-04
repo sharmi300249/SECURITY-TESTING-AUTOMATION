@@ -1,0 +1,45 @@
+import org.zaproxy.clientapi.core.ClientApi
+import org.zaproxy.clientapi.core.ApiResponse
+import org.zaproxy.clientapi.core.ApiResponseElement
+
+// Define the ZAP API key and the target URL
+String zapApiKey = 'YOUR_ZAP_API_KEY'
+String targetUrl = 'http://example.com'
+
+// Create a ZAP client
+ClientApi api = new ClientApi('localhost', 8080, zapApiKey)
+
+// Spider the target URL
+println 'Spidering target: ' + targetUrl
+ApiResponse spiderResponse = api.spider.scan(targetUrl, null, null, null, null)
+String spiderScanId = ((ApiResponseElement) spiderResponse).getValue()
+
+// Wait for the spider to complete
+println 'Waiting for the spider to complete...'
+int spiderProgress
+do {
+    Thread.sleep(1000)
+    spiderProgress = Integer.parseInt(((ApiResponseElement) api.spider.status(spiderScanId)).getValue())
+    println 'Spider progress: ' + spiderProgress + '%'
+} while (spiderProgress < 100)
+println 'Spider completed'
+
+// Start an active scan
+println 'Starting active scan: ' + targetUrl
+ApiResponse activeScanResponse = api.ascan.scan(targetUrl, 'true', 'false', null, null, null)
+String activeScanId = ((ApiResponseElement) activeScanResponse).getValue()
+
+// Wait for the active scan to complete
+println 'Waiting for the active scan to complete...'
+int activeScanProgress
+do {
+    Thread.sleep(1000)
+    activeScanProgress = Integer.parseInt(((ApiResponseElement) api.ascan.status(activeScanId)).getValue())
+    println 'Active scan progress: ' + activeScanProgress + '%'
+} while (activeScanProgress < 100)
+println 'Active scan completed'
+
+// Generate a report
+println 'Generating HTML report...'
+String report = new String(api.core.htmlreport())
+println 'Report generated successfully'
